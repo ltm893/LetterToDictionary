@@ -1,0 +1,76 @@
+
+import boto3
+
+
+
+# Initialize the DynamoDB resource
+dynamodb = boto3.resource('dynamodb')
+
+# Specify your table name
+table_name = 'WashDict' 
+table = dynamodb.Table(table_name)
+
+
+
+item_data = {
+        "word": "respectable",
+        "phonetic": "[ɹi.ˈspɛk.tə.bl̩]",
+        "phonetics": [
+            {
+                "text": "[ɹi.ˈspɛk.tə.bl̩]",
+                "audio": "https://api.dictionaryapi.dev/media/pronunciations/en/respectable-us.mp3",
+                "sourceUrl": "https://commons.wikimedia.org/w/index.php?curid=2100515",
+                "license": {
+                    "name": "BY-SA 3.0",
+                    "url": "https://creativecommons.org/licenses/by-sa/3.0"
+                }
+            }
+        ],
+        "meanings": [
+            {
+                "partOfSpeech": "adjective",
+                "definitions": [
+                    {
+                        "definition": "Deserving respect.",
+                        "synonyms": [],
+                        "antonyms": [],
+                        "example": "His accomplishments, morals, loyalty, and stature make him a respectable person."
+                    },
+                    {
+                        "definition": "Decent; satisfactory.",
+                        "synonyms": [],
+                        "antonyms": [],
+                        "example": "Turn up to the interview wearing something respectable.  She plays a respectable game of chess.  He got a respectable B+ on his last exam."
+                    },
+                    {
+                        "definition": "Moderately well-to-do.",
+                        "synonyms": [],
+                        "antonyms": []
+                    }
+                ],
+                "synonyms": [
+                    "honorable"
+                ],
+                "antonyms": [
+                    "contemptible",
+                    "despicable",
+                    "disrespectable"
+                ]
+            }
+        ],
+        "license": {
+            "name": "CC BY-SA 3.0",
+            "url": "https://creativecommons.org/licenses/by-sa/3.0"
+        },
+        "sourceUrls": [
+            "https://en.wiktionary.org/wiki/respectable"
+        ]
+    }
+
+
+try:
+    response = table.put_item(Item=item_data)
+    print("Item inserted successfully:")
+    print(response)
+except Exception as e:
+    print(f"Error inserting item: {e}")
