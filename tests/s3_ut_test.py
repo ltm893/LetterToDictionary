@@ -11,6 +11,7 @@ class TestS3MethodsTest(unittest.TestCase):
     def test_create_bucket(self):
         Location = check_create_bucket('ltm-893-test-bucket-123')
         self.assertEqual(Location, 'http://ltm-893-test-bucket-123.s3.amazonaws.com/')
+        #with self.assertRaises(ZeroDivisionError):
 
     def test_upper(self):
         self.assertEqual('foo'.upper(), 'FOO')

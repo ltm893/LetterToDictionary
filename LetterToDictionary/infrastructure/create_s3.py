@@ -8,18 +8,23 @@ logger = logging.getLogger(__name__)
 
 import requests
 
-text_file = './input/Series3Sub3E.txt'
-text_file = './input/test_input.txt'
+
+from infrastructure.S3Exceptions import S3BucketAlreadyExists
+
+
+# text_file = './input/Series3Sub3E.txt'
+# text_file = './input/test_input.txt'
 word_dict = {}
-exclude_file = 'config/exclude_words.txt'
+# exclude_file = 'config/exclude_words.txt'
 
 exclude_set = set()
 free_word_dictionary_url ='https://api.dictionaryapi.dev/api/v2/entries/en/'
 
 
 client = boto3.client('s3')
-bucket_name = 'ltm893-bag-writings'
+bucket_name = 'ltm893-bag-writings-999'
 writer_dir_name = 'Washington'
+
 
 
 def check_create_bucket(bucket):
@@ -27,6 +32,7 @@ def check_create_bucket(bucket):
     try:
         client.head_bucket(Bucket=bucket)
         logger.info(f"{bucket} s3 bucket found")
+        raise  S3BucketAlreadyExists(f"S3 bucket exist",499)
            
        
     except ClientError as e:
