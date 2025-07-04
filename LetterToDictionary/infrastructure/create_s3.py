@@ -1,4 +1,4 @@
-
+import sys
 import boto3
 from botocore.exceptions import ClientError
 
@@ -7,6 +7,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 import requests
+import time
 
 
 from infrastructure.S3Exceptions import S3BucketAlreadyExists
@@ -22,8 +23,9 @@ free_word_dictionary_url ='https://api.dictionaryapi.dev/api/v2/entries/en/'
 
 
 client = boto3.client('s3')
-bucket_name = 'ltm893-bag-writings-999'
-writer_dir_name = 'Washington'
+# resource  = boto3.resource('s3')
+# bucket_name = 'ltm893-bag-writings-999'
+# writer_dir_name = 'Washington'
 
 
 
@@ -32,20 +34,24 @@ def check_create_bucket(bucket):
     try:
         client.head_bucket(Bucket=bucket)
         logger.info(f"{bucket} s3 bucket found")
-        raise  S3BucketAlreadyExists(f"S3 bucket exist",499)
-           
+        raise  S3BucketAlreadyExists("S3 bucket exist",499)
+        sys.exit(1)   
        
     except ClientError as e:
         if e.response['Error']['Code'] == '404':
-            logger.info(f"Bucket {bucket} not found or you don't have access. Creattin {bucket}")
+            logger.info(f"Bucket {bucket} not found or you don't have access. Created {bucket}")
 
             try: 
                 response = client.create_bucket(
                 Bucket=bucket,
                 CreateBucketConfiguration={'LocationConstraint': 'us-east-2' }
                 )
-                print(response['Location'])
-                logger.info(f"Response: {response}")
+                logger.info(f"Calling bucket_exists waiter: " + str(time.time()))
+                s3_bucket_exists_waiter = client.get_waiter('bucket_exists')
+                s3_bucket_exists_waiter.wait(Bucket=bucket) 
+                logger.info("Bucket_exists complete")
+                logger.info(response['Location'])
+                logger.debug(f"Response: {response}")
                 return response['Location']
             
             except ClientError as e:
@@ -53,19 +59,28 @@ def check_create_bucket(bucket):
         else:
             logger.info("Exception occurred:", str(e))
         
-def check_create_prefix(bucket,writers_dir):
+def check_create_folder(bucket,writers_dir):
     try: 
         client.head_object(Bucket=bucket,Key=writers_dir)
         logger.info(f"{writers_dir} exists")
     except ClientError as e:
         error_code = e.response.get("Error", {}).get("Code")
         if error_code == '404':
-            logger.info(f"Bucket '{writers_dir}' does not exist.")
+            logger.info(f"Bucket '{writers_dir}' does not exist in {bucket}.")
             try:
-                client.put_object(
+                response =  client.put_object(
                 Bucket=bucket,
                 Key=writers_dir
-            )
+                )
+                logger.info(f"Calling object_exists waiter: " + str(time.time()))
+                s3_object_exists_waiter = client.get_waiter('object_exists')
+                s3_object_exists_waiter.wait(Bucket=bucket,Key=writers_dir) 
+                logger.info("object_exists complete")
+                logger.debug(f"Response: {response}")
+                logger.info(f"{writers_dir} prefix created in {bucket} bucket")
+                return {'Bucket': bucket,'Folder': writers_dir  }
+             
+
             except ClientError as e:
                 prefix_error_code = e.response.get("Error", {}).get("Code")
                 logger.error(f"Creating prefix {writers_dir} in {bucket} failed: {prefix_error_code} - {e}")
@@ -75,50 +90,37 @@ def check_create_prefix(bucket,writers_dir):
             logger.error(f"An unexpected error occurred when heading bucket '{bucket}': {error_code} - {e}")
     except Exception as e:
         logger.critical(f"A non-Boto3 error occurred: {e}")
+        
+        
+def check_folder_exists(bucket,folder):
+    try:
+        client.head_object(Bucket=bucket, Key=folder)
+        logger.info(f"Key {folder} found in {bucket}")
+        return True
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code")
+        if error_code == '404':
+               logger.info(f"Key {folder} not found in {bucket}")
+        else:
+            logger.error(f"An unexpected error occurred when heading bucket {bucket}: {error_code}")
+            raise
+ 
 
-
-def load_exlude_set():
-    
-    with open(exclude_file, 'r') as file:
-        for line in file:
-            clean_line = line.strip()
-            exclude_set.add(clean_line.lower())
-
-
-def get_alphabet_characters(input_string):
-    result = ""
-    for char in input_string:
-        if char.isalpha():
-            result += char
-    return result
-
-def call_free_dict_url(word):
-    url = free_word_dictionary_url  + word
-    print(url)
-    response = requests.get(url) 
-    print(response.status_code) 
-    print(response.text)
-
-def load_words_text():
-    with open(text_file, 'r') as file:
-        for line in file:
-            clean_line = line.strip()
-            
-            for item in clean_line.split() :
-                word = item.lower()
-                word = get_alphabet_characters(word)
-                if word not in exclude_set:
-                    word_dict[word] = call_free_dict_url(word) 
-
-    words = word_dict.keys()
-    print(len(words))
-    string_representation = ", ".join(str(item) for item in sorted(words))
-    print(string_representation)
-               
-
-
-if __name__=="__main__":
-    check_create_bucket(bucket_name)
-    check_create_prefix(bucket_name,writer_dir_name)
-    load_exlude_set()
-    load_words_text()
+def purge_bucket(bucket_name):
+    try: 
+        response = client.list_objects_v2(Bucket=bucket_name)
+        if 'Contents' in response:
+            try: 
+                objects_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
+                client.delete_objects(Bucket=bucket_name, Delete={'Objects': objects_to_delete})
+                logger.info(f"Emptied {bucket_name}")
+            except ClientError as e:
+                  logger.error(f"An unexpected error occurred when deleting objects in  {bucket_name}: {e}")
+    except ClientError as e:
+        logger.error(f"An unexpected error occurred when listing objects in  {bucket_name}: {e}")
+        
+    try:
+        response = client.delete_bucket(Bucket=bucket_name)
+        logger.info(f"Purged {bucket_name}")
+    except ClientError as e:
+        logger.error(f"An unexpected error occurred when deleting {bucket_name}: {e}")
