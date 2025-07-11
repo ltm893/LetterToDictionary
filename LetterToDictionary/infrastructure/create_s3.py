@@ -8,24 +8,21 @@ logger = logging.getLogger(__name__)
 
 import requests
 import time
-
+import os
 
 from infrastructure.S3Exceptions import S3BucketAlreadyExists
 
 
-# text_file = './input/Series3Sub3E.txt'
-# text_file = './input/test_input.txt'
+
 word_dict = {}
-# exclude_file = 'config/exclude_words.txt'
+
 
 exclude_set = set()
 free_word_dictionary_url ='https://api.dictionaryapi.dev/api/v2/entries/en/'
 
 
 client = boto3.client('s3')
-# resource  = boto3.resource('s3')
-# bucket_name = 'ltm893-bag-writings-999'
-# writer_dir_name = 'Washington'
+
 
 
 
@@ -46,7 +43,7 @@ def check_create_bucket(bucket):
                 Bucket=bucket,
                 CreateBucketConfiguration={'LocationConstraint': 'us-east-2' }
                 )
-                logger.info(f"Calling bucket_exists waiter: " + str(time.time()))
+                logger.info(f"Calling bucket_exists waiter: " + str(int(time.time())))
                 s3_bucket_exists_waiter = client.get_waiter('bucket_exists')
                 s3_bucket_exists_waiter.wait(Bucket=bucket) 
                 logger.info("Bucket_exists complete")
@@ -60,25 +57,26 @@ def check_create_bucket(bucket):
             logger.info("Exception occurred:", str(e))
         
 def check_create_folder(bucket,writers_dir):
+    writers_dir_path = writers_dir + '/'
     try: 
         client.head_object(Bucket=bucket,Key=writers_dir)
         logger.info(f"{writers_dir} exists")
     except ClientError as e:
         error_code = e.response.get("Error", {}).get("Code")
         if error_code == '404':
-            logger.info(f"Bucket '{writers_dir}' does not exist in {bucket}.")
+            logger.info(f"Bucket '{writers_dir_path}' does not exist in {bucket}.")
             try:
                 response =  client.put_object(
                 Bucket=bucket,
-                Key=writers_dir
+                Key=writers_dir_path
                 )
                 logger.info(f"Calling object_exists waiter: " + str(time.time()))
                 s3_object_exists_waiter = client.get_waiter('object_exists')
-                s3_object_exists_waiter.wait(Bucket=bucket,Key=writers_dir) 
+                s3_object_exists_waiter.wait(Bucket=bucket,Key=writers_dir_path) 
                 logger.info("object_exists complete")
                 logger.debug(f"Response: {response}")
-                logger.info(f"{writers_dir} prefix created in {bucket} bucket")
-                return {'Bucket': bucket,'Folder': writers_dir  }
+                logger.info(f"{writers_dir_path} prefix created in {bucket} bucket")
+                return {'Bucket': bucket,'Folder': writers_dir_path  }
              
 
             except ClientError as e:
@@ -91,7 +89,29 @@ def check_create_folder(bucket,writers_dir):
     except Exception as e:
         logger.critical(f"A non-Boto3 error occurred: {e}")
         
+def put_file(bucket,writers_dir,local_file,s3_file_name):
+     
+        # Upload the file object to S3
+        # s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=f)
+    if check_folder_exists(bucket,writers_dir + '/') :
+        try:
+            with open(local_file, 'rb') as f:
+                response = client.put_object(
+                Bucket=bucket,
+                Body=f,
+                Key=writers_dir + '/' + s3_file_name,
+                ServerSideEncryption='AES256'
+                )
+                logger.info(response)
+        except ClientError as e:
+                prefix_error_code = e.response.get("Error", {}).get("Code")
+                logger.error(f"Uploading {file_path} in {bucket} failed: {prefix_error_code} - {e}")
         
+        
+    else :
+        logger.info("Folder path does not exist, create path")
+    
+            
 def check_folder_exists(bucket,folder):
     try:
         client.head_object(Bucket=bucket, Key=folder)

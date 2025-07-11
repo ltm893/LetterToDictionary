@@ -8,7 +8,7 @@ exclude_file = 'config/exclude_words.txt'
 exclude_set = set()
 free_word_dictionary_url ='https://api.dictionaryapi.dev/api/v2/entries/en/'
 
-def load_exlude_set():
+def load_exclude_set(exclude_set):
     
     with open(exclude_file, 'r') as file:
         for line in file:
@@ -49,7 +49,7 @@ def load_words_text():
 
 
 if __name__=="__main__":
-    load_exlude_set()
+    load_exclude_set()
     load_words_text()
 
   
