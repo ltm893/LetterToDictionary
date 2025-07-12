@@ -1,6 +1,6 @@
-from infrastructure.create_s3 import check_create_bucket
-from infrastructure.create_s3 import check_create_folder
-from infrastructure.create_s3 import put_file
+from infrastructure.s3_ops import check_create_bucket
+from infrastructure.s3_ops import check_create_folder
+from infrastructure.s3_ops import put_file
 from convert_letters.person_letter_dictionary import load_exclude_set
 from convert_letters.person_letter_dictionary import load_words_text
 

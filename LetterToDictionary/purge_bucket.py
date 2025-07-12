@@ -1,5 +1,5 @@
-from infrastructure.create_s3 import purge_bucket
-from infrastructure.create_s3 import check_create_folder
+from infrastructure.s3_ops import purge_bucket
+from infrastructure.s3_ops import check_create_folder
 
 
 bucket_name = 'ltm893-bag-writings-220259-test'
