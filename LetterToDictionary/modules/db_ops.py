@@ -41,4 +41,5 @@ def exists_key(client,table,index,value):
 
 if __name__=="__main__":
     if exists_table(dynamodb_client,dyn_table):
-        if(exists_key(dynamodb_client,dyn_table,'word','respectable'))
+        if(exists_key(dynamodb_client,dyn_table,'word','respectable')):
+            print('yay')

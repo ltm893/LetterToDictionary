@@ -1,10 +1,13 @@
-from infrastructure.s3_ops import check_create_bucket
-from infrastructure.s3_ops import check_create_folder
-from infrastructure.s3_ops import put_file
-from convert_letters.person_letter_dictionary import load_exclude_set
-from convert_letters.person_letter_dictionary import load_words_text
+from modules.s3_infrastructure import check_create_bucket
+from modules.s3_infrastructure import check_create_folder
+from modules.s3_ops import put_file
+from modules.person_letter_dictionary import load_exclude_set
+from modules.person_letter_dictionary import load_words_text
 
 from pathlib import Path
+import boto3
+s3_client = boto3.client('s3')
+
 
 base_dir_path = Path(__file__).resolve().parent.parent
 data_dir_path = base_dir_path / "data"
@@ -19,9 +22,9 @@ writer_dir_name = 'Washington'
 table_name = writer_dir_name + '_table'
 
 
-if __name__=="__main__":
-   # check_create_bucket(bucket_name)
-   # check_create_folder(bucket_name,writer_dir_name)
-   # put_file(bucket_name,writer_dir_name,data_file_path,s3_file_name)
-    load_exclude_set(exclude_file_path)
-    load_words_text(data_file_path)
+if __name__ == "__main__":
+    check_create_bucket(s3_client, bucket_name)
+    # check_create_folder(bucket_name,writer_dir_name)
+    # put_file(bucket_name,writer_dir_name,data_file_path,s3_file_name)
+    # load_exclude_set(exclude_file_path)
+    # load_words_text(data_file_path)
