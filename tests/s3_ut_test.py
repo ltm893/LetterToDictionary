@@ -1,7 +1,7 @@
-from modules.s3_infrastructure import check_create_folder
-from modules.s3_infrastructure import check_create_bucket
-from modules.s3_infrastructure import check_folder_exists
-from modules.s3_infrastructure import purge_bucket
+from modules.infrastructure.s3 import check_create_folder
+from modules.infrastructure.s3 import check_create_bucket
+from modules.infrastructure.s3 import check_folder_exists
+from modules.infrastructure.s3 import purge_bucket
 import unittest
 import os
 import sys

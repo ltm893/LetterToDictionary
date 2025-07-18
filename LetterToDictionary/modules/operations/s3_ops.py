@@ -9,12 +9,12 @@ import time
 
 
 #from modules.S3Exceptions import S3BucketAlreadyExists
-from .s3_infrastructure import check_folder_exists
+from ..infrastructure.s3 import check_folder_exists
 
 
 
 def put_file(s3_client,bucket,writers_dir,local_file,s3_file_name):
-    if check_folder_exists(bucket,writers_dir + '/') :
+    if check_folder_exists(s3_client,bucket,writers_dir + '/') :
         try:
             with open(local_file, 'rb') as f:
                 response = s3_client.put_object(

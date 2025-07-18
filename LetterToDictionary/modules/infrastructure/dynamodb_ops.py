@@ -4,7 +4,7 @@ import boto3
 resource = boto3.resource('dynamodb', region_name='us-east-2')
 client = boto3.client("dynamodb")
 
-from database.db_ops import exists_table
+from ..operations.db_ops import exists_table
 
 
 # from db_ops import exists_table

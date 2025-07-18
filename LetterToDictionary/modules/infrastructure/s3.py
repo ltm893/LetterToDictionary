@@ -22,9 +22,7 @@ def check_create_bucket(s3_client,bucket):
     except ClientError as e:
         error_code = e.response['Error']['Code']
         logger.info(f"Error Code {error_code}")
-        if error_code == '400':
-            logger.info(f"Bucket {bucket} not found bad request check connectivity and permissions")
-        if error_code == '404':
+        if error_code == '400' or error_code == '404':
             logger.info(f"Bucket {bucket} not found or you don't have access to it")
 
             try: 
@@ -60,7 +58,7 @@ def check_create_folder(s3_client,bucket,writers_dir):
                 Key=writers_dir_path
                 )
                 logger.info(f"Calling object_exists waiter: " + str(time.time()))
-                s3_object_exists_waiter = client.get_waiter('object_exists')
+                s3_object_exists_waiter = s3_client.get_waiter('object_exists')
                 s3_object_exists_waiter.wait(Bucket=bucket,Key=writers_dir_path) 
                 logger.info("object_exists complete")
                 logger.debug(f"Response: {response}")

@@ -1,21 +1,23 @@
 import requests
 import time
-
+import json
+ 
 text_file = './input/Series3Sub3E.txt'
 text_file = './input/test_input.txt'
 word_dict = {}
-exclude_file = 'config/exclude_words.txt'
+#exclude_file = 'config/exclude_words.txt'
 #print(exclude_file)
-exclude_set = set()
+
 free_word_dictionary_url ='https://api.dictionaryapi.dev/api/v2/entries/en/'
 
 def load_exclude_set(exclude_file):
-    
+    exclude_set = set()
     with open(exclude_file, 'r') as file:
         for line in file:
             clean_line = line.strip()
             exclude_set.add(clean_line.lower())
 
+    return exclude_set
 
 def get_alphabet_characters(input_string):
     result = ""
@@ -30,9 +32,11 @@ def call_free_dict_url(word):
     response = requests.get(url) 
     time.sleep(5)
     if response.status_code == 200:
-         print(response.text)
+        return json.loads(response.text)
+    else:
+        return None
 
-def load_words_text(text_file):
+def load_words_text(text_file,exclude_set,writer):
     with open(text_file, 'r') as file:
         for line in file:
             clean_line = line.strip()
@@ -41,12 +45,15 @@ def load_words_text(text_file):
                 word = item.lower()
                 word = get_alphabet_characters(word)
                 if word not in exclude_set and len(word) > 1:
-                    word_dict[word] = call_free_dict_url(word) 
-
-    words = word_dict.keys()
-    print(len(words))
-    string_representation = ", ".join(str(item) for item in sorted(words))
-    print(string_representation)
+                    word_dict = call_free_dict_url(word) 
+                   
+                    if word_dict is not None : 
+                        wr = {"writer": writer}
+                        word_dict.append(wr)
+                        obj = (word_dict)
+                        json_formatted_str = json.dumps(obj, indent=4)
+                        print(json_formatted_str)    
+    
 
 
 
