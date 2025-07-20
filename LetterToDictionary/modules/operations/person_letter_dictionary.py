@@ -1,3 +1,5 @@
+from .db_ops import put_obj
+
 import requests
 import time
 import json
@@ -36,7 +38,7 @@ def call_free_dict_url(word):
     else:
         return None
 
-def load_words_text(text_file,exclude_set,writer):
+def load_words_text(text_file,exclude_set,writer,dynamo_resource, table_name,):
     with open(text_file, 'r') as file:
         for line in file:
             clean_line = line.strip()
@@ -51,8 +53,9 @@ def load_words_text(text_file,exclude_set,writer):
                         wr = {"writer": writer}
                         word_dict.append(wr)
                         obj = (word_dict)
-                        json_formatted_str = json.dumps(obj, indent=4)
-                        print(json_formatted_str)    
+                        json_obj = json.dumps(obj, indent=4)
+                        print(json_obj)  
+                        put_obj(dynamo_resource, table_name, word_dict)
     
 
 

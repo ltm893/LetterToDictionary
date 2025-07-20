@@ -1,17 +1,19 @@
-
+import logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 import boto3
-resource = boto3.resource('dynamodb', region_name='us-east-2')
-client = boto3.client("dynamodb")
 
 from ..operations.db_ops import exists_table
 
 
-# from db_ops import exists_table
-
-def create_dynamodb_table(table_name):
+def create_writer_dynamodb_table_if_not_exists(dynamo_client,dynamo_resource,table_name):
+    logger.info("called")
     try:
-        table = resource.create_table(
+        if not exists_table(dynamo_client,dynamo_resource,table_name) :
+            logger.info(f"Creating Table {table_name}")
+            table = dynamo_resource.create_table(
             TableName=table_name,
             KeySchema=[
                 {
@@ -41,7 +43,7 @@ def create_dynamodb_table(table_name):
                     {
                         'AttributeName': 'word',
                         'KeyType': 'HASH'
-                    },
+                    }
                 ],
                 'Projection': {
                     'ProjectionType': 'KEYS_ONLY',
@@ -55,8 +57,8 @@ def create_dynamodb_table(table_name):
         )
 
         # Wait for the table to be created
-        table.meta.client.get_waiter('table_exists').wait(TableName=table_name)
-        print(f"Table '{table_name}' created successfully.")
+            table.meta.client.get_waiter('table_exists').wait(TableName=table_name)
+            logger.info(f"{table_name} created successfully.")
 
     except Exception as e:
         print(f"Error creating table: {e}")

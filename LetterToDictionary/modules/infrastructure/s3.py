@@ -1,5 +1,5 @@
 import sys
-import boto3
+
 from botocore.exceptions import ClientError
 
 import logging
@@ -22,8 +22,10 @@ def check_create_bucket(s3_client,bucket):
     except ClientError as e:
         error_code = e.response['Error']['Code']
         logger.info(f"Error Code {error_code}")
+        
         if error_code == '400' or error_code == '404':
             logger.info(f"Bucket {bucket} not found or you don't have access to it")
+            
 
             try: 
                 logger.info(f"Creating {bucket}")

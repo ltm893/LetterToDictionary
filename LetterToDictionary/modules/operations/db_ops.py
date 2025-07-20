@@ -1,45 +1,46 @@
 
 
+from boto3.dynamodb.conditions import Key
+from botocore.exceptions import ClientError
+import boto3
 import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
-import boto3
-from botocore.exceptions import ClientError
-from boto3.dynamodb.conditions import Key
-
-table_name = 'WashDict'
-
-dynamodb = boto3.resource('dynamodb')
-dynamodb_client = boto3.client("dynamodb")
-dyn_table = dynamodb.Table(table_name)
-
-
-def exists_table(client,table):
-    try :
-        response = client.list_tables()
-        return table.name in response['TableNames']
-     
-    except dynamodb.exceptions.ResourceNotFoundException:
-        print("The specified DynamoDB table or item does not exist.")
-    except dynamodb.exceptions.ProvisionedThroughputExceededException:
-        print("Provisioned throughput exceeded. Consider increasing throughput or implementing retries.")
-    except ClientError as e:  # Catch any other ClientErrors
-        print(f"An unexpected DynamoDB error occurred: {e}")
-        
-def exists_key(client,table,index,value): 
-    try : 
-        response = table.query(Select='COUNT',KeyConditionExpression=Key(index).eq(value))
-        if response['Count'] > 0 :
+def exists_table(dynamo_client, dynamo_resource, table_name):
+    logger.info(f"Checking for {table_name} table existence")
+    try:
+        response = dynamo_client.list_tables()
+        print(response)
+        if not response['TableNames']:
+            logger.info('No Tables found')
+            return False
+        if table_name in response['TableNames']:
+            logger.info(f"Table {table_name} exists")
             return True
-        
-    except ClientError as e:  # Catch any other ClientErrors
-        print(f"An unexpected DynamoDB error occurred: {e}")
-        
-        
+     
 
-if __name__=="__main__":
-    if exists_table(dynamodb_client,dyn_table):
-        if(exists_key(dynamodb_client,dyn_table,'word','respectable')):
-            print('yay')
+    except dynamo_resource.exceptions.ResourceNotFoundException:
+        logger.info(f"DynamoDB {table_name} table does not exist.")
+        return False
+    except dynamo_resource.exceptions.ProvisionedThroughputExceededException:
+        logger.warn(
+            "Provisioned throughput exceeded. Consider increasing throughput or implementing retries.")
+    except ClientError as e:  # Catch any other ClientErrors
+        logger.error(f"An unexpected DynamoDB error occurred: {e}")
+        
+def put_obj(dynamo_resource, table_name, word_dict):
+    logger.info(f"Putting json object into {table_name} table")
+    
+    try:
+        table = dynamo_resource.Table(table_name)
+        response = table.put_item(Item=word_dict)
+    except ClientError as e:  # Catch  ClientErrors
+        logger.error(f"Put Item error occurred: {e}")
+
+
+
+
+
