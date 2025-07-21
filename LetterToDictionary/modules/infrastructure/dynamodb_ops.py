@@ -17,9 +17,11 @@ def create_writer_dynamodb_table_if_not_exists(dynamo_client,dynamo_resource,tab
             TableName=table_name,
             KeySchema=[
                 {
-                    'AttributeName': 'writer', 
+                    'AttributeName': 'word', 
                     'KeyType': 'HASH'
-                }
+                },
+                
+                
             ],
             AttributeDefinitions=[
                 {
@@ -41,7 +43,7 @@ def create_writer_dynamodb_table_if_not_exists(dynamo_client,dynamo_resource,tab
                 'IndexName': 'word_index',
                 'KeySchema': [
                     {
-                        'AttributeName': 'word',
+                        'AttributeName': 'writer',
                         'KeyType': 'HASH'
                     }
                 ],

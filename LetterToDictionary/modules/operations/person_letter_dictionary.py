@@ -48,14 +48,18 @@ def load_words_text(text_file,exclude_set,writer,dynamo_resource, table_name,):
                 word = get_alphabet_characters(word)
                 if word not in exclude_set and len(word) > 1:
                     word_dict = call_free_dict_url(word) 
-                   
                     if word_dict is not None : 
-                        wr = {"writer": writer}
-                        word_dict.append(wr)
-                        obj = (word_dict)
-                        json_obj = json.dumps(obj, indent=4)
-                        print(json_obj)  
-                        put_obj(dynamo_resource, table_name, word_dict)
+                        
+                        for w in word_dict:
+                            wr = {"writer": writer}
+                            w.update(wr)
+                            for k in ('sourceUrls','license','phonetic','phonetics'):
+                                if k in w :
+                                    del w[k]
+                            obj = (w)
+                            json_obj = json.dumps(obj, indent=4)
+                            print(json_obj)  
+                            put_obj(dynamo_resource, table_name, w)
     
 
 

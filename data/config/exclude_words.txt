@@ -6,6 +6,7 @@ for
 i
 is
 in
+into
 it
 have
 has
@@ -22,3 +23,5 @@ who
 whom
 with
 you
+george
+washington
